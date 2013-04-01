@@ -1,0 +1,14 @@
+<launch>
+  <node pkg="axis_camera" name="axis_cam" type="axis.py">
+    <param name="hostname" value="192.168.2.90"/>
+    <param name="width" value="800"/>
+    <param name="height" value="600"/>
+  </node>
+
+
+  <node pkg="image_transport" name="axis_republish" type="republish" args="compressed in:=/image_raw raw out:=/network/image_raw"/>
+  
+
+
+</launch>
+
