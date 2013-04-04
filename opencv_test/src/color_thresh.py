@@ -8,6 +8,8 @@ import cv
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import Pose
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 class image_converter:
@@ -19,6 +21,7 @@ class image_converter:
     self.bridge = CvBridge()
     self.image_sub = rospy.Subscriber("network/image_raw",Image,self.callback)
     self.pos_pub = rospy.Publisher("uav/pose", Point)
+    self.center_pub = rospy.Publisher("uav/centers", PoseArray)
 
 
   def callback(self,data):
@@ -45,7 +48,7 @@ class image_converter:
     #cv.InRangeS(hsv_img, (160, 75, 60), (180, 255, 255), thresholded_img) #red
     #cv.InRangeS(hsv_img, (20, 60, 60), (40, 255, 255), thresholded_img_y) #yellow
     cv.InRangeS(hsv_img, (150, 20, 160), (180, 255, 255), thresholded_img) #red
-    cv.InRangeS(hsv_img, (10, 52, 152), (40, 255, 255), thresholded_img_y) #yellow
+    cv.InRangeS(hsv_img, (10, 100, 152), (40, 255, 255), thresholded_img_y) #yellow
 
 #determine the objects moments and check that the area is large
 #enough to be our object
@@ -69,14 +72,23 @@ class image_converter:
     #moments_y = cv.Moments(thresholded_img_y, 0)
     moments_y = cv.Moments(mat_y, 0)
     area_y = cv.GetCentralMoment(moments_y, 0, 0)
-    print area, area_y
     uav_pos = Point()
+    centers = PoseArray()
+    red_center = Pose()
+    yellow_center = Pose()
 #there can be noise in the video so ignore objects with small areas
-    if(area > 10000) and (area_y > 10000):
+    if(area > 100) and (area_y > 100):
         x = cv.GetSpatialMoment(moments, 1, 0)/area
         y = cv.GetSpatialMoment(moments, 0, 1)/area
         x_y = cv.GetSpatialMoment(moments_y, 1, 0)/area_y
         y_y = cv.GetSpatialMoment(moments_y, 0, 1)/area_y
+
+        red_center.position.x = y
+        red_center.position.y = x
+        yellow_center.position.x = y_y
+        yellow_center.position.y = x_y
+        centers.poses.append(red_center)
+        centers.poses.append(yellow_center)
 
         angle = math.atan2(x - x_y, y - y_y)*180/math.pi
         #X and y are flipped to put it into the robot frame
@@ -89,20 +101,11 @@ class image_converter:
       	cv.Circle(img,(int(uav_y), int(uav_x)),5,(0,255,255))
         cv.Line(img,(int(uav_y), int(uav_x)),(int(uav_y - 20*math.sin(angle*math.pi/180)), int(uav_x - 20*math.cos(angle*math.pi/180))),(0,255,255),3,8,0)
     self.pos_pub.publish(uav_pos)
+    self.center_pub.publish(centers)
     added = cv.CreateImage(cv.GetSize(img), 8, 1)
     cv.Add(thresholded_img, thresholded_img_y, added)
+
     cv.ShowImage("Image window", img)
-    tmp =  mat.tostring()
-    del tmp
-    tmp =  mat_y.tostring()
-    del tmp
-    del thresholded_img
-    del thresholded_img_y
-    del added
-    del mat
-    del mat_y
-    del hsv_img
-    del img
     cv.WaitKey(3)
 
 def main(args):

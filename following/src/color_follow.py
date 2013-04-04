@@ -52,11 +52,11 @@ class follower:
 
     #TODO Make sure this subtraction is correct
     #z_cmd = (self.rot_set - angle)*3/180 #Tank Following
-    z_cmd = (self.rot_set - angle)*3/180 #Tank Following
+    z_cmd = (self.rot_set - angle)*2/180 #Tank Following
 
     #PD controller
-    x_cmd = x_diff*.2 + (x - self.x_prev)*.0002
-    y_cmd = y_diff*.1 + (y - self.y_prev)*.0002
+    x_cmd = x_diff*.1 + (x - self.x_prev)*.002
+    y_cmd = y_diff*.05 + (y - self.y_prev)*.002
 
     #x_cmd = x_cmd*math.cos(math.pi*angle/180)
     #y_cmd = y_cmd*math.sin(math.pi*angle/180)
@@ -66,8 +66,8 @@ class follower:
     detect = True
     #Angle outside of range to command x and y. Just control yaw
     if angle > 10 or angle < -10:
-      if abs(z_cmd) > .3:
-        z_cmd = .3*cmp(z_cmd,0)
+      if abs(z_cmd) > .2:
+        z_cmd = .2*cmp(z_cmd,0)
 
         x_cmd = 0
         y_cmd = 0
