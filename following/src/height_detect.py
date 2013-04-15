@@ -13,8 +13,8 @@ class height_detect:
   def __init__(self):
     rospy.init_node('height_detect', anonymous=True)
     self.drone_sub = rospy.Subscriber("ardrone/navdata",Navdata,self.navdata_callback)
-    self.pose_sub = rospy.Subscriber("uav/centers",PoseArray,self.callback)
-
+    self.pose_sub = rospy.Subscriber("/uav/centers",PoseArray,self.callback)
+    self.height_pub = rospy.Publisher("/height", Point)
     self.altd = 0
 
 
@@ -31,7 +31,6 @@ class height_detect:
       red_y = data.poses[0].position.y
       yellow_x = data.poses[1].position.x
       yellow_y = data.poses[1].position.y
-
       x_dist = abs(red_x - yellow_x)*rat_height
       y_dist = abs(red_y - yellow_y)*rat_wit
 
@@ -41,8 +40,10 @@ class height_detect:
       actual = .3 #m actual distance
 
       height = actual*f/dist
+      height_point = Point()
+      height_point.z = height
 
-      print height
+      self.height_pub.publish(height_point)
 
 def main(args):
   height_det = height_detect()

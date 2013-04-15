@@ -65,7 +65,7 @@ public:
   	uavColorThresh()
     	: it_(nh_)
   	{
-		image_sub_ = it_.subscribe("/network/image_raw", 1, &uavColorThresh::imageCb, this,
+		image_sub_ = it_.subscribe("/network/image_raw_filt", 1, &uavColorThresh::imageCb, this,
 					image_transport::TransportHints("raw"));
 		pos_pub = nh_.advertise<geometry_msgs::Point>( "/uav/pose", 1);
 		center_pub = nh_.advertise<geometry_msgs::PoseArray>( "/uav/centers", 1);
@@ -117,18 +117,18 @@ public:
 		// a hue range for the HSV color model
 		thresholded_img = cvCreateImage(cvGetSize(hsv_img), 8, 1);
     	thresholded_img_y = cvCreateImage(cvGetSize(hsv_img), 8, 1);
-    	uct_min.val[0] = 150; // h
-		uct_min.val[1] = 20; // s
-		uct_min.val[2] = 160; // v
+    	uct_min.val[0] = 0; // h
+		uct_min.val[1] = 0; // s
+		uct_min.val[2] = 222; // v
 		uct_max.val[0] = 180; // h
 		uct_max.val[1] = 255; // s
 		uct_max.val[2] = 255; // v
     	cvInRangeS (hsv_img, uct_min, uct_max, thresholded_img); // red
 
-    	uct_min.val[0] = 10; // h
-		uct_min.val[1] = 100; // s
-		uct_min.val[2] = 152; // v
-		uct_max.val[0] = 40; // h
+    	uct_min.val[0] = 31; // h
+		uct_min.val[1] = 178; // s
+		uct_min.val[2] = 64; // v
+		uct_max.val[0] = 180; // h
 		uct_max.val[1] = 255; // s
 		uct_max.val[2] = 255; // v
 		cvInRangeS (hsv_img, uct_min, uct_max, thresholded_img_y); // yellow
@@ -177,7 +177,8 @@ public:
 		added = cvCreateImage(cvGetSize(cv_ptr), 8, 1);
 		cvAdd(thresholded_img, thresholded_img_y, added);
 
-		cvShowImage(WIN_SRC,cv_ptr);
+		//cvShowImage(WIN_SRC,cv_ptr);
+		cvShowImage(WIN_SRC,added);
 		// Wait for a keypress
 		int c = cvWaitKey(1);
 		if(c!=-1)
