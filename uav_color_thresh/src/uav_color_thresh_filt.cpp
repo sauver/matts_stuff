@@ -200,7 +200,7 @@ public:
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "uavColorThresh");
+	ros::init(argc, argv, "uavColorThreshFilt");
 	uavColorThresh ucf;
 	ros::spin();
 }

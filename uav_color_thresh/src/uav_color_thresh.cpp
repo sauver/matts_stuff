@@ -20,19 +20,6 @@
 
 static const char WIN_SRC[] = "UAV Color Threshold";
  
-int g_slider_position_h1 = 0;
-int g_slider_position_s1 = 0;
-int g_slider_position_v1 = 0;
- 
-int g_slider_position_h2 = 255;
-int g_slider_position_s2 = 255;
-int g_slider_position_v2 = 255;
- 
-int g_slider_position_smooth = 0;
-
-int g_slider_position_cam = 1 ;
- 
-
 CvScalar uct_min = cvScalar(120, 120, 120, 120);
 CvScalar uct_max = cvScalar(134, 134, 134, 134);
 
@@ -98,36 +85,36 @@ public:
 			ROS_ERROR("error");
 		}
 
-	  geometry_msgs::Point uav_pos;
-	  geometry_msgs::PoseArray centers;
- 	  geometry_msgs::Pose red_center;
-	  geometry_msgs::Pose yellow_center;
+		geometry_msgs::Point uav_pos;
+		geometry_msgs::PoseArray centers;
+		geometry_msgs::Pose red_center;
+		geometry_msgs::Pose yellow_center;
 
 		// blur the source image to reduce color noise e
-		cvSmooth( cv_ptr, cv_ptr, CV_MEDIAN, 3, 0, 0, 0 );
+		cvSmooth( cv_ptr, cv_ptr, CV_MEDIAN, 11, 0, 0, 0 );
 
 		// convert the image to hsv(Hue, Saturation, Value) so its
 		// easier to determine the color to track(hue)
 		hsv_img = cvCreateImage(cvGetSize(cv_ptr), 8, 3);
-		cvCvtColor(cv_ptr, hsv_img, CV_BGR2HSV);
+                cvCvtColor(cv_ptr, hsv_img, CV_BGR2HSV);
 
 		// limit all pixels that don't match our criteria, in this case we are
 		// looking for purple but if you want you can adjust the first value in
 		// both turples which is the hue range(120,140). OpenCV uses 0-180 as
 		// a hue range for the HSV color model
-		thresholded_img = cvCreateImage(cvGetSize(hsv_img), 8, 1);
-    	thresholded_img_y = cvCreateImage(cvGetSize(hsv_img), 8, 1);
-    	uct_min.val[0] = 150; // h
+		thresholded_img = cvCreateImage(cvGetSize(cv_ptr), IPL_DEPTH_8U, 1);
+		thresholded_img_y = cvCreateImage(cvGetSize(cv_ptr), IPL_DEPTH_8U, 1);
+		uct_min.val[0] = 150; // h
 		uct_min.val[1] = 20; // s
 		uct_min.val[2] = 160; // v
 		uct_max.val[0] = 180; // h
 		uct_max.val[1] = 255; // s
 		uct_max.val[2] = 255; // v
-    	cvInRangeS (hsv_img, uct_min, uct_max, thresholded_img); // red
+		cvInRangeS (hsv_img, uct_min, uct_max, thresholded_img); // red
 
-    	uct_min.val[0] = 10; // h
-		uct_min.val[1] = 100; // s
-		uct_min.val[2] = 152; // v
+		uct_min.val[0] = 10; // h
+		uct_min.val[1] = 60; //100; // s
+		uct_min.val[2] = 150; // v
 		uct_max.val[0] = 40; // h
 		uct_max.val[1] = 255; // s
 		uct_max.val[2] = 255; // v
@@ -138,10 +125,10 @@ public:
 		moments = (CvMoments*)malloc(sizeof(CvMoments));
 		moments_y = (CvMoments*)malloc(sizeof(CvMoments));
 
-    	cvErode(thresholded_img_y,thresholded_img_y,NULL,4);
-		cvDilate(thresholded_img_y, thresholded_img_y,NULL,4);
-		cvErode(thresholded_img, thresholded_img,NULL,4);
-		cvDilate(thresholded_img, thresholded_img,NULL,4);
+		//cvErode(thresholded_img_y,thresholded_img_y,NULL,4);
+		//cvDilate(thresholded_img_y, thresholded_img_y,NULL,4);
+		//cvErode(thresholded_img, thresholded_img,NULL,4);
+		//cvDilate(thresholded_img, thresholded_img,NULL,4);
 		cvMoments(thresholded_img, moments, 1);
 		area = cvGetCentralMoment(moments, 0, 0);
 		cvMoments(thresholded_img_y, moments_y, 1);
@@ -178,6 +165,7 @@ public:
 		cvAdd(thresholded_img, thresholded_img_y, added);
 
 		cvShowImage(WIN_SRC,cv_ptr);
+                //cvShowImage(WIN_SRC, added);
 		// Wait for a keypress
 		int c = cvWaitKey(1);
 		if(c!=-1)
